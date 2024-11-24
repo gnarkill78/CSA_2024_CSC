@@ -23,6 +23,8 @@ Solution:
 This was a log analysis challenge and required investigation of a pcap file
 
 One of the first things in wireshark I do is check for objects that can be exported. In this, there were a large number of http objects.
+![image](https://github.com/user-attachments/assets/2054de8d-4fa0-4f93-b07b-3664b62efa54)
+
 The thing that stood out to me were the filenames of each object, based on their packet order. e.g.
 ```
 ?_=46
@@ -341,4 +343,124 @@ Switched green light to Cars and buses, north and south side:
 🎉 You win! You win! flag{8f9asdjk2jd9afjlz}
 ```
 :+1: FLAG{8f9asdjk2jd9afjlz}
+<hr>
+
+### SSHielded
+Description - Results of a recent security audit found that SSH is configured for password authentication. The root account is also permitted to login via password. Secure SSH on the device using the public and private keys provided.
+
+Once completed the flag.txt will be located in the engineers home directory
+
+SSH Credentials: engineer:papercloudmystic
+
+Flag Format:flag{entering_your_flag}
+
+Solution:
+This challenge provides the public and private keys of the user 'engineer'
+
+This is a hardening challenge and based on the description, we have to secure ssh access.
+
+First thing to do is login as engineer and check whether this account can run any sudo commands
+```
+└──╼ $ssh engineer@10.0.255.200
+The authenticity of host '10.0.255.200 (10.0.255.200)' can't be established.
+ED25519 key fingerprint is SHA256:zvY/YgbGzL4h3C34FcKviaBhhXMxgElfy9N/NZOkJrA.
+This host key is known by the following other names/addresses:
+    ~/.ssh/known_hosts:10: [hashed name]
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added '10.0.255.200' (ED25519) to the list of known hosts.
+engineer@10.0.255.200's password: 
+Welcome to Ubuntu 24.04.1 LTS (GNU/Linux 5.15.0-119-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+This system has been minimized by removing packages and content that are
+not required on a system that users do not log into.
+
+To restore this content, you can run the 'unminimize' command.
+engineer@SSHielded:~$ sudo -l
+Matching Defaults entries for engineer on SSHielded:
+    env_reset, mail_badpass,
+    secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin,
+    use_pty
+
+User engineer may run the following commands on SSHielded:
+    (ALL) NOPASSWD: /usr/sbin/service ssh reload
+```
+We can see from this that 'engineer' is allowed to reload the ssh service.
+This supports the theory that it's an ssh hardening challenge.
+
+Let's modify the login method for 'enginner' and set them up to use key authentication.
+
+For this, I'l open a new terminal window, keeping my current login active.
+We can also see that 'engineer' is not currently using ssh keys because there is no .ssh folder in their home folder
+```
+engineer@SSHielded:~$ ls -la
+total 28
+drwxr-x--- 1 engineer engineer 4096 Nov  4 03:35 .
+drwxr-xr-x 1 root     root     4096 Nov  4 03:35 ..
+-rw-r--r-- 1 engineer engineer  220 Mar 31  2024 .bash_logout
+-rw-r--r-- 1 engineer engineer 3771 Mar 31  2024 .bashrc
+drwx------ 2 engineer engineer 4096 Nov  4 03:35 .cache
+-rw-r--r-- 1 engineer engineer  807 Mar 31  2024 .profile
+```
+In the new terminal window, I transfer the key to the remote server
+```
+└──╼ $ssh-copy-id engineer@10.0.255.200
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+engineer@10.0.255.200's password: 
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'engineer@10.0.255.200'"
+and check to make sure that only the key(s) you wanted were added.
+```
+Going back to the server, we can now see the .ssh directory
+```
+engineer@SSHielded:~$ ls -la
+total 32
+drwxr-x--- 1 engineer engineer 4096 Nov 24 06:46 .
+drwxr-xr-x 1 root     root     4096 Nov  4 03:35 ..
+-rw-r--r-- 1 engineer engineer  220 Mar 31  2024 .bash_logout
+-rw-r--r-- 1 engineer engineer 3771 Mar 31  2024 .bashrc
+drwx------ 2 engineer engineer 4096 Nov  4 03:35 .cache
+-rw-r--r-- 1 engineer engineer  807 Mar 31  2024 .profile
+drwx------ 2 engineer engineer 4096 Nov 24 06:46 .ssh
+```
+Now to test that the key pair is working
+```
+└──╼ $ssh engineer@10.0.255.200
+Welcome to Ubuntu 24.04.1 LTS (GNU/Linux 5.15.0-119-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+This system has been minimized by removing packages and content that are
+not required on a system that users do not log into.
+
+To restore this content, you can run the 'unminimize' command.
+Last login: Sun Nov 24 06:40:43 2024 from 192.168.0.105
+```
+Note, there was no request for a password.
+
+We're still not there though since we haven't seen flag.txt in the engineers home directory.
+
+Let's modify the sshd_config file to deny password authentication and deny the root user to login
+```
+vim /etc/ssh/sshd_config
+```
+Disable passwordauthentication
+
+![image](https://github.com/user-attachments/assets/ffbec16d-2fd1-43bf-95e3-a21035ac78af)
+
+Disable root account login
+
+![image](https://github.com/user-attachments/assets/bc1eca6c-79a8-4dc3-be27-3caab58910f7)
+
+
+
+:+1: FLAG{ENTER_FLAG_HERE} - TBA
 <hr>
