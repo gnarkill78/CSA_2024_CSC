@@ -460,7 +460,26 @@ Disable root account login
 
 ![image](https://github.com/user-attachments/assets/bc1eca6c-79a8-4dc3-be27-3caab58910f7)
 
+Enable Public Key Authentication
 
+![image](https://github.com/user-attachments/assets/c19ebec5-89f8-445f-8423-4b3cfbbe25e9)
 
-:+1: FLAG{ENTER_FLAG_HERE} - TBA
+Add authentication method
+
+![image](https://github.com/user-attachments/assets/a40b168e-6e80-4420-84df-d18dfd8c1aee)
+
+Save and close sshd_config then reload the ssh service
+```
+engineer@SSHielded:~$ sudo service ssh reload
+ * Reloading OpenBSD Secure Shell server's configuration sshd                                 [ OK ] 
+```
+
+Once reloaded, execute 'ls' on the engineer's home directory and the flag should now be there
+```
+engineer@SSHielded:~$ ls
+flag.txt
+engineer@SSHielded:~$ cat flag.txt 
+flag{securing_the_gate}
+```
+:+1: FLAG{securing_the_gate}
 <hr>
